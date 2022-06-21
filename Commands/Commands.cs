@@ -99,7 +99,7 @@ namespace DiscordBot
         //convert item hash to associated id
         private int convertItemHashToId(string hashString)
         {
-            int hash = int.Parse(hashString);
+            long hash = long.Parse(hashString);
             var id = unchecked((int)hash);
             return id;
         }
@@ -125,38 +125,9 @@ namespace DiscordBot
             return destinyPlayer;
         }
 
-        //using a membership id and platform, this will return a list of a players character ids
-        //best used in conjunction with getDestinyPlayerInfo
-        /*
-        private List<string> getCharacterIds(string platformId, string membershipId)
-        {
-            string endpoint = "/Destiny2/" + platformId + "/Profile/" + membershipId + "/?components=200";
-            var url = apiRoot + endpoint;
-            addHeaders();
-            var request = client.GetAsync(url).Result;
-            var result = request.Content.ReadAsStringAsync().Result;
-
-            Console.WriteLine("hello");
-
-            dynamic json = (JObject)JsonConvert.DeserializeObject(result);
-
-            var response = json.Children().First;
-
-            Console.WriteLine(response.ToString());
-
-            //var destinyPlayer = JsonConvert.DeserializeObject<ProfileResponse>(result);
-
-            //var characterIds = destinyPlayer.Response.profile.data.characterIds;
-
-
-            //Console.WriteLine("hi" + destinyPlayer.ErrorCode);
-
-            return characterIds;
-        }
-        */
-
+        //gets info of a destiny player (using getDestinyPlayerInfo) - uses bungie id to query profile endpoint, pulling basic info about the account's associated characters
         [Command("overview")]
-        public async Task getShit (CommandContext ctx, string platform, [RemainingText] string name)
+        public async Task overview (CommandContext ctx, string platform, [RemainingText] string name)
         {
             string cleanName = CleanString.ReplaceHashtag(name);
             string platformId = platformConvert(platform).ToString();
@@ -170,7 +141,6 @@ namespace DiscordBot
             var request = client.GetAsync(url).Result;
             var result = request.Content.ReadAsStringAsync().Result;
 
-            //var json = JsonConvert.DeserializeObject(result);
             var o = JObject.Parse(result);
 
             //first character info
@@ -269,10 +239,13 @@ namespace DiscordBot
             }
         }
 
-        [Command("test")]
-        public async Task test(CommandContext ctx)
+
+        //WIP - return Xur's location and items (and item values)
+        [Command("xur")]
+        public async Task xurInfo (CommandContext ctx)
         {
             
+
         }
     }
 }

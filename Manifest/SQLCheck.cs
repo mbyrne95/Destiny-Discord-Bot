@@ -3,29 +3,39 @@
 namespace DiscordBot
 
 {
-    class SQLCheck
+    static class SQLCheck
     {
-        public SQLiteConnection myConnection;
 
-        public SQLCheck(string database)
+        static string database;
+
+        static SQLCheck()
         {
-            myConnection = new SQLiteConnection("Data Source=" + @database);
+            database = getManifest.database;
         }
 
-        public void OpenConnection()
+        //get weapon ID (CONVERT HASH FIRST), return json from manifest with associated data
+        public static string weaponLookupById(int id)
         {
-            if (myConnection.State != System.Data.ConnectionState.Open)
-            {
-                myConnection.Open();
-            }
-        }
+            SQLiteConnection myConnection = new SQLiteConnection("Data Source=" + @database);
 
-        public void CloseConnection()
-        {
-            if (myConnection.State != System.Data.ConnectionState.Closed)
+            myConnection.Open();
+
+            SQLiteCommand cmd = new SQLiteCommand(myConnection);
+            cmd.CommandText = "SELECT id, json FROM DestinyInventoryItemDefinition WHERE id=@id";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.Prepare();
+            string json = "";
+
+            using SQLiteDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                myConnection.Close();
+                json += ($"{reader.GetString(1)}");
             }
+
+            reader.Close();
+            myConnection.Close();
+
+            return json;
         }
     }
 }

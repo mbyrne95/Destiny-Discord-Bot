@@ -11,9 +11,6 @@ namespace DiscordBot
 {
     class Program
     {
-        public static getManifest manifestOBJ = new getManifest();
-        public static string database;
-
 
         static void Main(string[] args)
         {
@@ -22,8 +19,8 @@ namespace DiscordBot
 
         static async Task MainAsync()
         {
-            manifestOBJ.start();
-            database = manifestOBJ.database;
+            
+            string db = getManifest.database;
 
             var discord = new DiscordClient(new DiscordConfiguration()
             {
