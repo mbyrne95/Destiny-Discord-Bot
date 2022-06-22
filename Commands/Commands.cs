@@ -125,7 +125,47 @@ namespace DiscordBot
             return destinyPlayer;
         }
 
+
+        //returns an array of item hashes and associated instance ids
+        //  [ kineticHash, energyHash, powerHash ]
+        //  [ kineticId  , energyId  , powerId   ]
+        private string[,] getItemHashPerCharacter (string platform, string membershipId, string characterId)
+        {
+            string platformId = platformConvert(platform).ToString();
+            string endPoint = "/Destiny2/" + platformId + "/Profile/" + membershipId + "/Character/" + characterId + "/?components=205";
+            var url = apiRoot + endPoint;
+            addHeaders();
+            var request = client.GetAsync(url).Result;
+            var result = request.Content.ReadAsStringAsync().Result;
+
+            var o = JObject.Parse(result);
+
+            var itemContainer = o["Response"]["equipment"]["data"]["items"].Children().First();
+
+            String[,] itemInfo = new String[2,3];
+
+            //obtaining character item hashes and instance ids
+            itemInfo[0, 0] = itemContainer["itemHash"].ToString();
+            itemInfo[1, 0] = itemContainer["itemInstanceId"].ToString();
+
+            itemContainer = itemContainer.Next;
+
+            itemInfo[0, 1] = itemContainer["itemHash"].ToString();
+            itemInfo[1, 1] = itemContainer["itemInstanceId"].ToString();
+
+            itemContainer = itemContainer.Next;
+
+            itemInfo[0, 2] = itemContainer["itemHash"].ToString();
+            itemInfo[1, 2] = itemContainer["itemInstanceId"].ToString();
+
+            return itemInfo;
+        }
+
+
+
         //gets info of a destiny player (using getDestinyPlayerInfo) - uses bungie id to query profile endpoint, pulling basic info about the account's associated characters
+        //added - equipped weapons of the relevant character
+        //need to add: Exception Handling, Perks of equipped weapons
         [Command("overview")]
         public async Task overview (CommandContext ctx, string platform, [RemainingText] string name)
         {
@@ -144,8 +184,24 @@ namespace DiscordBot
             var o = JObject.Parse(result);
 
             //first character info
-            var firstChar = o.Properties().First().First().First().First().First().First().First();
+            var firstChar = o["Response"]["characters"]["data"].Children().First();
             var firstCharProperties = firstChar.Children().First();
+
+            //getting the path name for the characteritemhash
+            string x = firstChar.Path.ToString();
+            string[] parts = x.Split('.');
+            string firstCharId = parts[parts.Length - 1];
+
+            //getting weapon info for first character
+            string[,] firstCharWeapons = getItemHashPerCharacter(platform, membershipId, firstCharId);
+            string firstKineticJson = SQLCheck.weaponLookupById(convertItemHashToId(firstCharWeapons[0, 0]));
+            string firstKineticName = (JObject.Parse(firstKineticJson))["displayProperties"]["name"].ToString();
+            string firstEnergyJson = SQLCheck.weaponLookupById(convertItemHashToId(firstCharWeapons[0, 1]));
+            string firstEnergyName = (JObject.Parse(firstEnergyJson))["displayProperties"]["name"].ToString();
+            string firstPowerJson = SQLCheck.weaponLookupById(convertItemHashToId(firstCharWeapons[0, 2]));
+            string firstPowerName = (JObject.Parse(firstPowerJson))["displayProperties"]["name"].ToString();
+
+
             string firstCharLight = firstCharProperties["light"].ToString();
             string firstCharRace = convertRace(firstCharProperties["raceType"].ToString());
             string firstCharClass = convertClass(firstCharProperties["classType"].ToString());
@@ -167,8 +223,11 @@ namespace DiscordBot
 
             };
 
-            firstMsg.AddField("Light Level: ", firstCharLight);
-            firstMsg.AddField("Hours Played: ", (firstCharTimePlayed / 60).ToString());
+            firstMsg.AddField("Light Level: ", firstCharLight, true);
+            firstMsg.AddField("Hours Played: ", (firstCharTimePlayed / 60).ToString(), true);
+            firstMsg.AddField("Equipped Weapons:\n"+ firstKineticName, "perks will go here");
+            firstMsg.AddField(firstEnergyName, "perks will go here");
+            firstMsg.AddField(firstPowerName, "perks will go here");
 
             await ctx.RespondAsync(firstMsg);
 
@@ -177,6 +236,18 @@ namespace DiscordBot
 
             if (secondChar != null)
             {
+                x = secondChar.Path.ToString();
+                parts = x.Split('.');
+                var secondCharId = parts[parts.Length - 1];
+
+                string[,] secondCharWeapons = getItemHashPerCharacter(platform, membershipId, secondCharId);
+                string secondKineticJson = SQLCheck.weaponLookupById(convertItemHashToId(secondCharWeapons[0, 0]));
+                string secondKineticName = (JObject.Parse(secondKineticJson))["displayProperties"]["name"].ToString();
+                string secondEnergyJson = SQLCheck.weaponLookupById(convertItemHashToId(secondCharWeapons[0, 1]));
+                string secondEnergyName = (JObject.Parse(secondEnergyJson))["displayProperties"]["name"].ToString();
+                string secondPowerJson = SQLCheck.weaponLookupById(convertItemHashToId(secondCharWeapons[0, 2]));
+                string secondPowerName = (JObject.Parse(secondPowerJson))["displayProperties"]["name"].ToString();
+
                 var secondCharProperties = secondChar.Children().First();
                 string secondCharLight = secondCharProperties["light"].ToString();
                 string secondCharRace = convertRace(secondCharProperties["raceType"].ToString());
@@ -199,8 +270,11 @@ namespace DiscordBot
 
                 };
 
-                secondMsg.AddField("Light Level: ", secondCharLight);
-                secondMsg.AddField("Hours Played: ", (secondCharTimePlayed / 60).ToString());
+                secondMsg.AddField("Light Level: ", secondCharLight, true);
+                secondMsg.AddField("Hours Played: ", (secondCharTimePlayed / 60).ToString(), true);
+                secondMsg.AddField("Equipped Weapons:\n" + secondKineticName, "perks will go here");
+                secondMsg.AddField(secondEnergyName, "perks will go here");
+                secondMsg.AddField(secondPowerName, "perks will go here");
 
                 await ctx.RespondAsync(secondMsg);
             }
@@ -210,6 +284,18 @@ namespace DiscordBot
 
             if(thirdChar != null)
             {
+                x = thirdChar.Path.ToString();
+                parts = x.Split('.');
+                var thirdCharId = parts[parts.Length - 1];
+
+                string[,] thirdCharWeapons = getItemHashPerCharacter(platform, membershipId, thirdCharId);
+                string thirdKineticJson = SQLCheck.weaponLookupById(convertItemHashToId(thirdCharWeapons[0, 0]));
+                string thirdKineticName = (JObject.Parse(thirdKineticJson))["displayProperties"]["name"].ToString();
+                string thirdEnergyJson = SQLCheck.weaponLookupById(convertItemHashToId(thirdCharWeapons[0, 1]));
+                string thirdEnergyName = (JObject.Parse(thirdEnergyJson))["displayProperties"]["name"].ToString();
+                string thirdPowerJson = SQLCheck.weaponLookupById(convertItemHashToId(thirdCharWeapons[0, 2]));
+                string thirdPowerName = (JObject.Parse(thirdPowerJson))["displayProperties"]["name"].ToString();
+
                 var thirdCharProperties = thirdChar.Children().First();
                 string thirdCharLight = thirdCharProperties["light"].ToString();
                 string thirdCharRace = convertRace(thirdCharProperties["raceType"].ToString());
@@ -232,20 +318,15 @@ namespace DiscordBot
 
                 };
 
-                thirdMsg.AddField("Light Level: ", thirdCharLight);
-                thirdMsg.AddField("Hours Played: ", (thirdCharTimePlayed / 60).ToString());
+                thirdMsg.AddField("Light Level: ", thirdCharLight, true);
+                thirdMsg.AddField("Hours Played: ", (thirdCharTimePlayed / 60).ToString(), true);
+                thirdMsg.AddField("Equipped Weapons:\n" + thirdKineticName, "perks will go here");
+                thirdMsg.AddField(thirdEnergyName, "perks will go here");
+                thirdMsg.AddField(thirdPowerName, "perks will go here");
 
                 await ctx.RespondAsync(thirdMsg);
             }
         }
 
-
-        //WIP - return Xur's location and items (and item values)
-        [Command("xur")]
-        public async Task xurInfo (CommandContext ctx)
-        {
-            
-
-        }
     }
 }
