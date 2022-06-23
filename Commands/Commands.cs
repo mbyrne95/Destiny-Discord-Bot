@@ -176,25 +176,69 @@ namespace DiscordBot
 
             //List<String> perkList = new List<String>();
 
-            string formattedPerks = "";
+            string formattedPerks = "";;
 
             //iterate through perks, leaving out null perks and converting to Ids
-            for(int i = 0; i < o["Response"]["perks"]["data"]["perks"].Children().Count(); i++)
+            for (int i = 0; i < o["Response"]["perks"]["data"]["perks"].Children().Count(); i++)
             {
-                if (perkBucket["iconPath"].ToString() != "")
-                {
-                    var x = JObject.Parse(SQLCheck.perkLookupById(convertHashToId(perkBucket["perkHash"].ToString())));
+                var x = JObject.Parse(SQLCheck.perkLookupById(convertHashToId(perkBucket["perkHash"].ToString())));
 
-                    if(i != o["Response"]["perks"]["data"]["perks"].Children().Count() - 1)
+                //second to last
+                if (i == o["Response"]["perks"]["data"]["perks"].Children().Count() - 2)
+                {
+                    if (perkBucket.Next["visible"].ToString().Equals("false", StringComparison.OrdinalIgnoreCase) || perkBucket.Next["isActive"].ToString().Equals("false", StringComparison.OrdinalIgnoreCase))
                     {
-                        formattedPerks += x["displayProperties"]["name"].ToString() + "|";
+                        if ((perkBucket["visible"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                            && (perkBucket["isActive"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                            && !(x["displayProperties"]["name"].ToString().Contains("Burst"))
+                            && !(x["displayProperties"]["name"].ToString().Contains("Glaive"))
+                            && !(x["displayProperties"]["name"].ToString().Contains("Frame")))
+                        {
+                            formattedPerks += x["displayProperties"]["name"].ToString();
+                        }
                     }
                     else
+                    {
+                        if ((perkBucket["visible"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                            && (perkBucket["isActive"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                            && !(x["displayProperties"]["name"].ToString().Contains("Burst"))
+                            && !(x["displayProperties"]["name"].ToString().Contains("Glaive"))
+                            && !(x["displayProperties"]["name"].ToString().Contains("Frame")))
+                        {
+                            formattedPerks += x["displayProperties"]["name"].ToString() + " | ";
+                        }
+                    }
+                }
+
+                //last
+                else if (i == o["Response"]["perks"]["data"]["perks"].Children().Count() - 1)
+                {
+                    if ((perkBucket["visible"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                        && (perkBucket["isActive"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                        && !(x["displayProperties"]["name"].ToString().Contains("Burst"))
+                        && !(x["displayProperties"]["name"].ToString().Contains("Glaive"))
+                        && !(x["displayProperties"]["name"].ToString().Contains("Frame")))
                     {
                         formattedPerks += x["displayProperties"]["name"].ToString();
                     }
                 }
+
+                //every other case
+                else
+                {
+                    if ((perkBucket["visible"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                        && (perkBucket["isActive"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+                        && !(x["displayProperties"]["name"].ToString().Contains("Burst"))
+                        && !(x["displayProperties"]["name"].ToString().Contains("Glaive"))
+                        && !(x["displayProperties"]["name"].ToString().Contains("Frame")))
+                    {
+                        formattedPerks += x["displayProperties"]["name"].ToString() + " | ";
+                    }
+
+                }   
+
                 perkBucket = perkBucket.Next;
+
             }
 
             return formattedPerks;
